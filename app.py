@@ -9,7 +9,7 @@ import time
 app = Flask(__name__)
 
 # API_KEY muss regelmäßig erneuert werden (gültig für 24 Stunden)
-API_KEY = 'RGAPI-72e45188-04be-4e1b-88f2-cf6a961fdb8f'  # ERSETZEN MIT NEUEM KEY!
+API_KEY = 'Your_API_Key'  # ERSETZEN MIT NEUEM KEY!
 REGION = 'europe'
 PLATFORM = 'euw1'
 
