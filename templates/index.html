@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LoL Last Matches</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .toast { 
+      position: fixed; 
+      top: 20px; 
+      right: 20px; 
+      background: #1f2937; 
+      color: #fff; 
+      padding: 12px 18px; 
+      border-radius: 8px; 
+      display: none; 
+      z-index: 1000;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .toast.error { background: #dc2626; }
+    .toast.success { background: #059669; }
+    .toast.warning { background: #d97706; }
+    .loader {
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #3b82f6;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      animation: spin 1s linear infinite;
+      display: inline-block;
+      margin-right: 10px;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body class="bg-gray-900 text-white min-h-screen flex items-center justify-center p-4">
+  <div class="bg-gray-800 p-8 rounded-2xl shadow-lg w-full max-w-2xl">
+    <div class="flex justify-between items-center mb-6">
+      <h1 class="text-2xl font-bold">League of Legends - Last Matches</h1>
+      <button id="themeToggle" class="px-3 py-1 bg-gray-700 rounded-lg hover:bg-gray-600 transition">🌙</button>
+    </div>
+    
+    <div class="flex gap-2 mb-4">
+      <input type="text" id="riotId" placeholder="Name#Tag (z.B. WheatlessWizard#Wheat)" 
+             class="w-full px-4 py-2 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500">
+      <button id="checkBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition flex items-center">
+        Check
+      </button>
+    </div>
+
+    <div id="apiKeyWarning" class="bg-yellow-600 p-3 rounded-lg mb-4 hidden">
+      <p class="text-sm">⚠️ API-Key könnte abgelaufen sein. Der Key ist nur 24 Stunden gültig.</p>
+    </div>
+
+    <div id="summonerInfo" class="mt-6 hidden text-center p-4 bg-gray-700 rounded-lg"></div>
+    
+    <div id="loading" class="mt-6 text-center hidden">
+      <div class="loader mx-auto"></div>
+      <p class="mt-2">Lade Daten...</p>
+    </div>
+
+    <div id="matches" class="mt-6 grid gap-4"></div>
+
+    <div id="noMatches" class="mt-6 text-center text-gray-400 hidden">
+      <p>Keine Matches gefunden oder Spieler hat noch keine Spiele gespielt.</p>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script>
+    const toast = (msg, type = '') => {
+      const t = document.getElementById("toast");
+      t.textContent = msg;
+      t.className = `toast ${type}`;
+      t.style.display = "block";
+      setTimeout(() => t.style.display = "none", 4000);
+    };
+
+    // Theme Toggle
+    document.getElementById("themeToggle").addEventListener("click", () => {
+      document.body.classList.toggle("bg-gray-100");
+      document.body.classList.toggle("text-black");
+      document.body.classList.toggle("bg-gray-900");
+      document.body.classList.toggle("text-white");
+    });
+
+    // Check Button Event
+    document.getElementById("checkBtn").addEventListener("click", async () => {
+      const riotId = document.getElementById("riotId").value.trim();
+      const summonerDiv = document.getElementById("summonerInfo");
+      const matchesDiv = document.getElementById("matches");
+      const loadingDiv = document.getElementById("loading");
+      const noMatchesDiv = document.getElementById("noMatches");
+      
+      // Reset previous results
+      summonerDiv.classList.add("hidden");
+      matchesDiv.innerHTML = "";
+      noMatchesDiv.classList.add("hidden");
+      
+      if (!riotId.includes("#")) {
+        toast("Bitte eine gültige Riot ID (Name#Tag) eingeben.", "error");
+        return;
+      }
+
+      const [gameName, tagLine] = riotId.split("#");
+      
+      // Show loading
+      loadingDiv.classList.remove("hidden");
+      
+      try {
+        const res = await fetch(`/api/last-matches?gameName=${encodeURIComponent(gameName)}&tagLine=${encodeURIComponent(tagLine)}`);
+        const data = await res.json();
+        
+        if (!res.ok) {
+          throw new Error(data.error || `HTTP ${res.status}`);
+        }
+
+        if (data.error) {
+          // API Key error detection
+          if (data.error.includes("API-Key") || data.error.includes("403")) {
+            document.getElementById("apiKeyWarning").classList.remove("hidden");
+          }
+          throw new Error(data.error);
+        }
+
+        // Summoner Info anzeigen
+        summonerDiv.classList.remove("hidden");
+        summonerDiv.innerHTML = `
+          <img src="${data.summoner.icon}" class="w-20 h-20 rounded-full mx-auto mb-2">
+          <p class="text-xl font-bold">${data.summoner.name}</p>
+          <p class="text-gray-400">Level ${data.summoner.level}</p>
+        `;
+
+        // Matches anzeigen
+        if (data.matches && data.matches.length > 0) {
+          data.matches.forEach(m => {
+            const div = document.createElement("div");
+            div.className = "bg-gray-700 p-4 rounded-lg hover:bg-gray-600 transition";
+            div.innerHTML = `
+              <p><span class="font-bold">Champion:</span> ${m.champion}</p>
+              <p><span class="font-bold">Start:</span> ${m.game_start}</p>
+              <p><span class="font-bold">Dauer:</span> ${m.duration}</p>
+              ${m.match_id ? `<p class="text-xs text-gray-400 truncate">Match ID: ${m.match_id}</p>` : ''}
+            `;
+            matchesDiv.appendChild(div);
+          });
+        } else {
+          noMatchesDiv.classList.remove("hidden");
+        }
+
+        toast("Daten erfolgreich geladen ✅", "success");
+        
+      } catch (err) {
+        console.error("Fehler:", err);
+        toast(err.message || "Fehler beim Abrufen der Daten", "error");
+      } finally {
+        loadingDiv.classList.add("hidden");
+      }
+    });
+
+    // Enter-Taste Unterstützung
+    document.getElementById("riotId").addEventListener("keypress", (e) => {
+      if (e.key === "Enter") {
+        document.getElementById("checkBtn").click();
+      }
+    });
+  </script>
+</body>
+</html>
