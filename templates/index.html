@@ -51,6 +51,35 @@
       background: rgba(251, 191, 36, 0.1);
       border: 1px solid #f59e0b;
     }
+    .champion-icon {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid #3b82f6;
+    }
+    .match-type {
+      padding: 3px 10px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: bold;
+      display: inline-block;
+    }
+    .match-type-ranked { background: #dc2626; color: white; }
+    .match-type-normal { background: #059669; color: white; }
+    .match-type-aram { background: #7c3aed; color: white; }
+    .match-type-other { background: #6b7280; color: white; }
+    .match-card {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+    .match-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
   </style>
 </head>
 <body class="bg-gray-900 text-white min-h-screen flex items-center justify-center p-4">
@@ -96,6 +125,29 @@
       t.style.display = "block";
       setTimeout(() => t.style.display = "none", 4000);
     };
+
+    // Map für Match-Typen
+    const matchTypeMap = {
+      400: { name: 'Normal', class: 'match-type-normal' },
+      420: { name: 'Ranked Solo', class: 'match-type-ranked' },
+      430: { name: 'Normal', class: 'match-type-normal' },
+      440: { name: 'Ranked Flex', class: 'match-type-ranked' },
+      450: { name: 'ARAM', class: 'match-type-aram' },
+      700: { name: 'Clash', class: 'match-type-ranked' },
+      830: { name: 'Co-op vs AI', class: 'match-type-other' },
+      840: { name: 'Co-op vs AI', class: 'match-type-other' },
+      850: { name: 'Co-op vs AI', class: 'match-type-other' },
+      900: { name: 'URF', class: 'match-type-other' },
+      920: { name: 'PORO King', class: 'match-type-other' },
+      1020: { name: 'One for All', class: 'match-type-other' },
+      1300: { name: 'Nexus Blitz', class: 'match-type-other' },
+      1400: { name: 'Ultimate Spellbook', class: 'match-type-other' },
+      1900: { name: 'URF', class: 'match-type-other' }
+    };
+
+    function getMatchType(queueId) {
+      return matchTypeMap[queueId] || { name: 'Unbekannt', class: 'match-type-other' };
+    }
 
     // Theme Toggle
     document.getElementById("themeToggle").addEventListener("click", () => {
@@ -166,13 +218,22 @@
         // Matches anzeigen
         if (data.matches && data.matches.length > 0) {
           data.matches.forEach(m => {
+            const matchType = getMatchType(m.queue_id);
             const div = document.createElement("div");
             div.className = "bg-gray-700 p-4 rounded-lg hover:bg-gray-600 transition";
             div.innerHTML = `
-              <p><span class="font-bold">Champion:</span> ${m.champion}</p>
-              <p><span class="font-bold">Start:</span> ${m.game_start}</p>
-              <p><span class="font-bold">Dauer:</span> ${m.duration}</p>
-              ${m.match_id ? `<p class="text-xs text-gray-400 truncate">Match ID: ${m.match_id}</p>` : ''}
+              <div class="match-card">
+                <div class="flex flex-col items-center">
+                  <img src="${m.champion_icon}" class="champion-icon mb-2" alt="${m.champion}">
+                  <span class="${matchType.class} match-type">${matchType.name}</span>
+                </div>
+                <div class="match-info">
+                  <p class="font-bold text-lg mb-1">${m.champion}</p>
+                  <p><span class="font-bold">Start:</span> ${m.game_start}</p>
+                  <p><span class="font-bold">Dauer:</span> ${m.duration}</p>
+                  ${m.match_id ? `<p class="text-xs text-gray-400 truncate mt-2">Match ID: ${m.match_id}</p>` : ''}
+                </div>
+              </div>
             `;
             matchesDiv.appendChild(div);
           });

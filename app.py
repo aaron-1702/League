@@ -117,12 +117,19 @@ def last_matches():
                 # Finde den Spieler in Participants
                 participant = next((p for p in info["participants"] if p["puuid"] == puuid), None)
                 champion = participant["championName"] if participant else "Unbekannt"
+                champion_id = participant["championId"] if participant else 0
+                queue_id = info["queueId"]
+                
+                # Champion Icon URL erstellen
+                champion_icon = f"https://ddragon.leagueoflegends.com/cdn/14.10.1/img/champion/{champion.replace(' ', '')}.png"
                 
                 matches.append({
                     "match_id": match_id,
                     "game_start": game_start,
                     "duration": duration,
-                    "champion": champion
+                    "champion": champion,
+                    "champion_icon": champion_icon,
+                    "queue_id": queue_id
                 })
                 
             except Exception as e:
@@ -131,7 +138,9 @@ def last_matches():
                     "match_id": match_id,
                     "game_start": "Fehler",
                     "duration": "Fehler",
-                    "champion": "Fehler beim Laden"
+                    "champion": "Fehler beim Laden",
+                    "champion_icon": "",
+                    "queue_id": 0
                 })
 
         # Berechne die Zeit seit dem letzten Spiel
