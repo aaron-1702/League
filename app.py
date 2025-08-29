@@ -184,10 +184,12 @@ if __name__ == "__main__":
         print("❌ WARNUNG: API-Key fehlt oder ist ungültig.")
         print("Bitte generiere einen neuen Key auf https://developer.riotgames.com/")
     
-    # Starte Browser im Hintergrund
-    threading.Thread(target=open_browser, daemon=True).start()
-    
-    # Starte Flask Server
-    print("🚀 Server starting on http://127.0.0.1:5000")
-    print("⚠️  Denke daran, den API-Key regelmäßig zu erneuern!")
-    app.run(debug=True, use_reloader=False)
+    # Nur für lokale Entwicklung den Browser öffnen
+    import os
+    if not os.environ.get('RENDER'):  # Render.com setzt diese Umgebungsvariable
+        threading.Thread(target=open_browser, daemon=True).start()
+        print("🚀 Server starting on http://127.0.0.1:5000")
+        app.run(debug=True, use_reloader=False, host='0.0.0.0', port=5000)
+    else:
+        # Für Production auf Render.com
+        app.run(debug=False, host='0.0.0.0', port=5000)
