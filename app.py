@@ -5,11 +5,13 @@ from flask import Flask, request, jsonify, render_template
 import webbrowser
 import threading
 import time
+import os
+from dotenv import load_dotenv
 
 app = Flask(__name__)
 
-# API_KEY muss regelmäßig erneuert werden (gültig für 24 Stunden)
-API_KEY = 'Your_API_Key'  # ERSETZEN MIT NEUEM KEY!
+load_dotenv()
+API_KEY = os.getenv("RIOT_API_KEY")
 REGION = 'europe'
 PLATFORM = 'euw1'
 
