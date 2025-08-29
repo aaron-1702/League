@@ -105,6 +105,8 @@ def last_matches():
         
         # Match Details sammeln
         matches = []
+        latest_time_ago = None
+        
         for match_id in match_ids:
             try:
                 match = get_match_details(match_id)
@@ -122,6 +124,7 @@ def last_matches():
                     "duration": duration,
                     "champion": champion
                 })
+                
             except Exception as e:
                 print(f"Fehler bei Match {match_id}: {e}")
                 matches.append({
@@ -131,13 +134,39 @@ def last_matches():
                     "champion": "Fehler beim Laden"
                 })
 
+        # Berechne die Zeit seit dem letzten Spiel
+        if matches:
+            now = datetime.utcnow()
+            first_game_start_str = matches[0]["game_start"]
+            first_game_start_dt = datetime.strptime(first_game_start_str, "%Y-%m-%d %H:%M:%S")
+            time_since = now - first_game_start_dt
+            
+            days = time_since.days
+            hours = time_since.seconds // 3600
+            minutes = (time_since.seconds % 3600) // 60
+            
+            # Formatierung der Zeitangabe
+            time_parts = []
+            if days > 0:
+                time_parts.append(f"{days} Tag{'e' if days > 1 else ''}")
+            if hours > 0:
+                time_parts.append(f"{hours} Stunde{'n' if hours > 1 else ''}")
+            if minutes > 0:
+                time_parts.append(f"{minutes} Minute{'n' if minutes > 1 else ''}")
+            
+            if time_parts:
+                latest_time_ago = f"{' '.join(time_parts)} her"
+            else:
+                latest_time_ago = "weniger als eine Minute her"
+
         return jsonify({
             "summoner": {
                 "name": actual_game_name,
                 "level": summoner_level,
                 "icon": summoner_icon
             },
-            "matches": matches
+            "matches": matches,
+            "latest_time_ago": latest_time_ago
         })
         
     except Exception as e:

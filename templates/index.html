@@ -35,6 +35,22 @@
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
+    .time-ago {
+      font-size: 0.9rem;
+      color: #d1d5db;
+      background: rgba(75, 85, 99, 0.5);
+      padding: 6px 10px;
+      border-radius: 6px;
+      display: inline-block;
+      margin-top: 8px;
+      border: 1px solid #4b5563;
+    }
+    .time-ago.highlight {
+      color: #fbbf24;
+      font-weight: bold;
+      background: rgba(251, 191, 36, 0.1);
+      border: 1px solid #f59e0b;
+    }
   </style>
 </head>
 <body class="bg-gray-900 text-white min-h-screen flex items-center justify-center p-4">
@@ -57,7 +73,7 @@
     </div>
 
     <div id="summonerInfo" class="mt-6 hidden text-center p-4 bg-gray-700 rounded-lg"></div>
-    
+    <div id="lastGameAgo" class="mt-4 text-center"></div>
     <div id="loading" class="mt-6 text-center hidden">
       <div class="loader mx-auto"></div>
       <p class="mt-2">Lade Daten...</p>
@@ -96,11 +112,13 @@
       const matchesDiv = document.getElementById("matches");
       const loadingDiv = document.getElementById("loading");
       const noMatchesDiv = document.getElementById("noMatches");
+      const lastGameAgoDiv = document.getElementById("lastGameAgo");
       
       // Reset previous results
       summonerDiv.classList.add("hidden");
       matchesDiv.innerHTML = "";
       noMatchesDiv.classList.add("hidden");
+      lastGameAgoDiv.innerHTML = "";
       
       if (!riotId.includes("#")) {
         toast("Bitte eine gültige Riot ID (Name#Tag) eingeben.", "error");
@@ -135,6 +153,15 @@
           <p class="text-xl font-bold">${data.summoner.name}</p>
           <p class="text-gray-400">Level ${data.summoner.level}</p>
         `;
+
+        // Zeit seit letztem Spiel anzeigen
+        if (data.latest_time_ago) {
+          lastGameAgoDiv.innerHTML = `
+            <div class="time-ago ${data.latest_time_ago.includes('gerade eben') ? 'highlight' : ''}">
+              Letztes Spiel: ${data.latest_time_ago}
+            </div>
+          `;
+        }
 
         // Matches anzeigen
         if (data.matches && data.matches.length > 0) {
