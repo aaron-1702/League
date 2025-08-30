@@ -66,7 +66,7 @@ python app.py
 League/
 ├── app.py                 # Hauptanwendung (Flask Server)
 ├── index.html            # Frontend Template
-├── .env                  # Umgebungsvariablen (nicht im Repository)
+├── .env                  # Umgebungsvariablen 
 ├── requirements.txt      # Python Abhängigkeiten
 └── README.md            # Diese Datei
 ```
